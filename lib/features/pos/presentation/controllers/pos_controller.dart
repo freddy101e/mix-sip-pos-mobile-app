@@ -55,8 +55,9 @@ class PosState {
     loading: loading ?? this.loading,
     submitting: submitting ?? this.submitting,
     error: clearError ? null : error ?? this.error,
-    clientReference:
-        clearClientReference ? null : clientReference ?? this.clientReference,
+    clientReference: clearClientReference
+        ? null
+        : clientReference ?? this.clientReference,
   );
 }
 
@@ -110,7 +111,9 @@ class PosController extends StateNotifier<PosState> {
   void add(Product product) {
     final cart = [...state.cart];
     final isNewSale = cart.isEmpty;
-    final index = cart.indexWhere((e) => e.product.id == product.id);
+    final index = cart.indexWhere(
+      (e) => e.product.id == product.id && e.complimentaryReason == null,
+    );
     if (index < 0) {
       cart.add(CartLine(product, 1));
     } else {
@@ -137,16 +140,63 @@ class PosController extends StateNotifier<PosState> {
     );
   }
 
+  void markComplimentary(int index, int quantity, String? reason) {
+    if (state.submitting || index < 0 || index >= state.cart.length) return;
+    if (reason != null && reason != 'birthday' && reason != 'loyalty_card') {
+      return;
+    }
+    final cart = [...state.cart];
+    final source = cart[index];
+    if (quantity < 1 ||
+        quantity > source.quantity ||
+        reason == source.complimentaryReason) {
+      return;
+    }
+    if (quantity == source.quantity) {
+      cart.removeAt(index);
+    } else {
+      cart[index] = source.copyWith(source.quantity - quantity);
+    }
+    final target = cart.indexWhere(
+      (line) =>
+          line.product.id == source.product.id &&
+          line.complimentaryReason == reason,
+    );
+    if (target < 0) {
+      cart.add(CartLine(source.product, quantity, complimentaryReason: reason));
+    } else {
+      cart[target] = cart[target].copyWith(cart[target].quantity + quantity);
+    }
+    state = state.copyWith(cart: cart, clearQuote: true, clearError: true);
+  }
+
   Future<void> quote() async {
-    if (state.customer == null || state.cart.isEmpty) return;
-    state = state.copyWith(submitting: true, clearError: true);
+    if (state.submitting || state.customer == null || state.cart.isEmpty) {
+      return;
+    }
+    final customer = state.customer!;
+    final cart = state.cart;
+    state = state.copyWith(
+      submitting: true,
+      clearError: true,
+      clearQuote: true,
+    );
     try {
-      state = state.copyWith(
-        quote: await _repo.quote(state.customer!, state.cart),
-        submitting: false,
-      );
+      final result = await _repo.quote(customer, cart);
+      if (!mounted) return;
+      if (!identical(cart, state.cart) || customer != state.customer) {
+        state = state.copyWith(submitting: false, clearQuote: true);
+        return;
+      }
+      state = state.copyWith(quote: result, submitting: false);
     } on AppException catch (e) {
-      state = state.copyWith(error: e, submitting: false);
+      if (!mounted) return;
+      final current = identical(cart, state.cart) && customer == state.customer;
+      state = state.copyWith(
+        error: current ? e : null,
+        submitting: false,
+        clearQuote: true,
+      );
     }
   }
 

@@ -1,3 +1,4 @@
+import '../../../core/errors/app_exception.dart';
 import '../../printing/domain/printer_models.dart';
 
 class Product {
@@ -40,11 +41,19 @@ class Customer {
 }
 
 class CartLine {
-  const CartLine(this.product, this.quantity);
+  const CartLine(this.product, this.quantity, {this.complimentaryReason});
   final Product product;
   final int quantity;
-  double get total => product.price * quantity;
-  CartLine copyWith(int quantity) => CartLine(product, quantity);
+  final String? complimentaryReason;
+  String? get complimentaryLabel => switch (complimentaryReason) {
+    'birthday' => 'Birthday treat',
+    'loyalty_card' => 'Loyalty reward',
+    _ => null,
+  };
+  double get total =>
+      complimentaryReason == null ? product.price * quantity : 0;
+  CartLine copyWith(int quantity) =>
+      CartLine(product, quantity, complimentaryReason: complimentaryReason);
 }
 
 class PosQuote {
@@ -60,6 +69,35 @@ class PosQuote {
     tax: (json['tax'] as num).toDouble(),
     total: (json['total'] as num).toDouble(),
   );
+  static void validateFreeLines(
+    Map<String, dynamic> json,
+    List<CartLine> cart,
+  ) {
+    final expected = <String, int>{};
+    for (final line in cart.where((line) => line.complimentaryReason != null)) {
+      final key = '${line.product.id}:${line.complimentaryReason}';
+      expected[key] = (expected[key] ?? 0) + line.quantity;
+    }
+    if (expected.isEmpty) return;
+    final actual = <String, int>{};
+    for (final raw in json['lines'] as List? ?? const []) {
+      final line = Map<String, dynamic>.from(raw as Map);
+      final key = '${line['product_id']}:${line['complimentary_reason']}';
+      if (!expected.containsKey(key)) continue;
+      if (line['unit_price'] != 0 || line['total'] != 0) {
+        throw const AppException(
+          'Free-item pricing could not be confirmed. Checkout has been paused.',
+        );
+      }
+      actual[key] = (actual[key] ?? 0) + (line['quantity'] as num).toInt();
+    }
+    if (expected.entries.any((entry) => actual[entry.key] != entry.value)) {
+      throw const AppException(
+        'Free-item pricing could not be confirmed. Checkout has been paused.',
+      );
+    }
+  }
+
   final double subtotal, discount, tax, total;
 }
 
@@ -84,16 +122,15 @@ class SaleResult {
       invoiceNumber: order['invoice_no'].toString(),
       status: order['order_status']?.toString() ?? 'unknown',
       due: _number(order['due']),
-      receiptLines:
-          serverLines.isNotEmpty
-              ? serverLines
-                  .map(
-                    (line) => ReceiptLine.fromJson(
-                      Map<String, dynamic>.from(line as Map),
-                    ),
-                  )
-                  .toList()
-              : _fallbackReceipt(order, cart),
+      receiptLines: serverLines.isNotEmpty
+          ? serverLines
+                .map(
+                  (line) => ReceiptLine.fromJson(
+                    Map<String, dynamic>.from(line as Map),
+                  ),
+                )
+                .toList()
+          : _fallbackReceipt(order, cart),
     );
   }
 
@@ -134,10 +171,9 @@ class SaleResult {
     ];
 
     if (discount > 0.00001) {
-      final percent =
-          discountPercent > 0.00001
-              ? ' (${discountPercent.toStringAsFixed(2)}%)'
-              : '';
+      final percent = discountPercent > 0.00001
+          ? ' (${discountPercent.toStringAsFixed(2)}%)'
+          : '';
       lines.add(
         ReceiptLine(
           content: 'Discount$percent: -\$${discount.toStringAsFixed(2)}',
@@ -159,7 +195,11 @@ class SaleResult {
         bold: true,
       ),
       const ReceiptLine(content: '--------------------------------'),
-      for (final item in cart) ReceiptLine(content: _itemLine(item)),
+      for (final item in cart) ...[
+        ReceiptLine(content: _itemLine(item)),
+        if (item.complimentaryLabel != null)
+          ReceiptLine(content: '${item.complimentaryLabel} - FREE'),
+      ],
       const ReceiptLine(content: ' '),
       ReceiptLine(
         content: 'TOTAL: \$${_money(order['total'])}',

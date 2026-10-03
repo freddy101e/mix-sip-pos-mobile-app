@@ -198,10 +198,9 @@ class OrdersRepository {
     ];
 
     if (discount > 0.00001) {
-      final percent =
-          discountPercent > 0.00001
-              ? ' (${discountPercent.toStringAsFixed(2)}%)'
-              : '';
+      final percent = discountPercent > 0.00001
+          ? ' (${discountPercent.toStringAsFixed(2)}%)'
+          : '';
       lines.add(
         ReceiptLine(
           content: 'Discount$percent: -\$${discount.toStringAsFixed(2)}',
@@ -223,7 +222,11 @@ class OrdersRepository {
         bold: true,
       ),
       const ReceiptLine(content: '--------------------------------'),
-      for (final item in items) ReceiptLine(content: _itemLine(item)),
+      for (final item in items) ...[
+        ReceiptLine(content: _itemLine(item)),
+        if (item['complimentary_label'] != null)
+          ReceiptLine(content: '${item['complimentary_label']} - FREE'),
+      ],
       const ReceiptLine(content: ' '),
       ReceiptLine(
         content: 'TOTAL: \$${_money(order['total'] ?? summary.total)}',
@@ -237,14 +240,14 @@ class OrdersRepository {
 
   static String _itemLine(Map<String, dynamic> item) {
     final rawQuantity = _number(item['quantity']);
-    final quantityValue =
-        rawQuantity == rawQuantity.roundToDouble()
-            ? rawQuantity.toInt().toString()
-            : rawQuantity.toString();
+    final quantityValue = rawQuantity == rawQuantity.roundToDouble()
+        ? rawQuantity.toInt().toString()
+        : rawQuantity.toString();
     final quantity = quantityValue.padRight(3).substring(0, 3);
     final rawName = item['product_name']?.toString() ?? '-';
-    final name =
-        (rawName.length > 18 ? rawName.substring(0, 18) : rawName.padRight(18));
+    final name = (rawName.length > 18
+        ? rawName.substring(0, 18)
+        : rawName.padRight(18));
     final amount = '\$${_money(item['total'])}'.padLeft(7);
     return '$quantity $name $amount';
   }

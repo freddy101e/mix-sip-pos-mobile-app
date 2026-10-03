@@ -30,28 +30,26 @@ class PosScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         bottom: false,
-        child:
-            state.loading
-                ? const Center(child: CircularProgressIndicator())
-                : Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1440),
-                    child:
-                        wide
-                            ? const Padding(
-                              padding: EdgeInsets.fromLTRB(20, 18, 20, 16),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(child: _CatalogPane()),
-                                  SizedBox(width: 18),
-                                  SizedBox(width: 390, child: _OrderPanel()),
-                                ],
-                              ),
-                            )
-                            : const _CatalogPane(),
-                  ),
+        child: state.loading
+            ? const Center(child: CircularProgressIndicator())
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1440),
+                  child: wide
+                      ? const Padding(
+                          padding: EdgeInsets.fromLTRB(20, 18, 20, 16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(child: _CatalogPane()),
+                              SizedBox(width: 18),
+                              SizedBox(width: 390, child: _OrderPanel()),
+                            ],
+                          ),
+                        )
+                      : const _CatalogPane(),
                 ),
+              ),
       ),
     );
   }
@@ -62,19 +60,18 @@ class PosScreen extends ConsumerWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder:
-          (sheetContext) => FractionallySizedBox(
-            heightFactor: .92,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                14,
-                10,
-                14,
-                MediaQuery.viewPaddingOf(sheetContext).bottom + 16,
-              ),
-              child: const _OrderPanel(inSheet: true),
-            ),
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: .92,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            14,
+            10,
+            14,
+            MediaQuery.viewPaddingOf(sheetContext).bottom + 16,
           ),
+          child: const _OrderPanel(inSheet: true),
+        ),
+      ),
     );
   }
 }
@@ -129,36 +126,36 @@ class _CatalogPane extends ConsumerWidget {
         ],
         const SizedBox(height: 18),
         Expanded(
-          child:
-              state.products.isEmpty
-                  ? const AppEmptyState(
-                    icon: Icons.search_off_rounded,
-                    title: 'No products found',
-                    message: 'Try another product name or code.',
-                  )
-                  : GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 245,
-                          mainAxisExtent: 260,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                    itemCount: state.products.length,
-                    itemBuilder: (context, index) {
-                      final product = state.products[index];
-                      final line = state.cart.where(
-                        (item) => item.product.id == product.id,
-                      );
-                      return _ProductCard(
-                        product: product,
-                        selectedQuantity:
-                            line.isEmpty ? 0 : line.first.quantity,
-                        onTap: () => controller.add(product),
-                      );
-                    },
+          child: state.products.isEmpty
+              ? const AppEmptyState(
+                  icon: Icons.search_off_rounded,
+                  title: 'No products found',
+                  message: 'Try another product name or code.',
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 245,
+                    mainAxisExtent: 260,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
                   ),
+                  itemCount: state.products.length,
+                  itemBuilder: (context, index) {
+                    final product = state.products[index];
+                    final line = state.cart.where(
+                      (item) => item.product.id == product.id,
+                    );
+                    return _ProductCard(
+                      product: product,
+                      selectedQuantity: line.fold<int>(
+                        0,
+                        (sum, item) => sum + item.quantity,
+                      ),
+                      onTap: () => controller.add(product),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -181,17 +178,15 @@ class _ProductCard extends StatelessWidget {
     final selected = selectedQuantity > 0;
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color:
-          selected
-              ? (dark ? const Color(0xFF3B3124) : AppColors.blush)
-              : Theme.of(context).cardTheme.color,
+      color: selected
+          ? (dark ? const Color(0xFF3B3124) : AppColors.blush)
+          : Theme.of(context).cardTheme.color,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color:
-              selected
-                  ? AppColors.amber
-                  : Theme.of(context).colorScheme.outlineVariant,
+          color: selected
+              ? AppColors.amber
+              : Theme.of(context).colorScheme.outlineVariant,
           width: selected ? 1.5 : 1,
         ),
       ),
@@ -331,8 +326,8 @@ class _ProductImage extends StatelessWidget {
         width: double.infinity,
         fit: BoxFit.contain,
         errorBuilder: (_, _, _) => fallback,
-        loadingBuilder:
-            (context, child, progress) => progress == null ? child : fallback,
+        loadingBuilder: (context, child, progress) =>
+            progress == null ? child : fallback,
       ),
     );
   }
@@ -450,48 +445,52 @@ class _OrderPanel extends ConsumerWidget {
                 labelText: 'Customer',
                 prefixIcon: Icon(Icons.person_outline_rounded),
               ),
-              items:
-                  state.customers
-                      .map(
-                        (customer) => DropdownMenuItem(
-                          value: customer,
-                          child: Text(
-                            customer.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                      .toList(),
+              items: state.customers
+                  .map(
+                    (customer) => DropdownMenuItem(
+                      value: customer,
+                      child: Text(
+                        customer.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(),
               onChanged: controller.selectCustomer,
             ),
           ),
           const SizedBox(height: 12),
           Expanded(
-            child:
-                state.cart.isEmpty
-                    ? const AppEmptyState(
-                      icon: Icons.shopping_bag_outlined,
-                      title: 'Your order is empty',
-                      message: 'Select a product to add it to this sale.',
-                    )
-                    : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: state.cart.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final line = state.cart[index];
-                        return _CartLineTile(
-                          line: line,
-                          onDecrease:
-                              () =>
-                                  controller.quantity(index, line.quantity - 1),
-                          onIncrease:
-                              () =>
-                                  controller.quantity(index, line.quantity + 1),
-                        );
-                      },
-                    ),
+            child: state.cart.isEmpty
+                ? const AppEmptyState(
+                    icon: Icons.shopping_bag_outlined,
+                    title: 'Your order is empty',
+                    message: 'Select a product to add it to this sale.',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: state.cart.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final line = state.cart[index];
+                      return _CartLineTile(
+                        line: line,
+                        onReward: state.submitting
+                            ? null
+                            : () => _showRewardDialog(
+                                context,
+                                line,
+                                (quantity, reason) => controller
+                                    .markComplimentary(index, quantity, reason),
+                              ),
+                        onDecrease: () =>
+                            controller.quantity(index, line.quantity - 1),
+                        onIncrease: () =>
+                            controller.quantity(index, line.quantity + 1),
+                      );
+                    },
+                  ),
           ),
           if (state.error != null)
             Padding(
@@ -539,76 +538,72 @@ class _OrderPanel extends ConsumerWidget {
                 FilledButton.icon(
                   onPressed:
                       state.submitting ||
-                              state.cart.isEmpty ||
-                              state.customer == null
-                          ? null
-                          : () async {
-                            if (state.quote == null) {
-                              await controller.quote();
-                              return;
+                          state.cart.isEmpty ||
+                          state.customer == null
+                      ? null
+                      : () async {
+                          if (state.quote == null) {
+                            await controller.quote();
+                            return;
+                          }
+                          final sale = await showModalBottomSheet<SaleResult>(
+                            context: context,
+                            isScrollControlled: true,
+                            useSafeArea: true,
+                            builder: (_) => _PaymentSheet(quote: state.quote!),
+                          );
+                          if (sale == null || !context.mounted) return;
+                          final printed = sale.isPending
+                              ? false
+                              : await ref
+                                    .read(printerControllerProvider.notifier)
+                                    .printReceipt(sale.receiptLines);
+                          String? trackingError;
+                          if (printed) {
+                            try {
+                              await ref
+                                  .read(posRepositoryProvider)
+                                  .markPrinted(sale.orderId);
+                            } on AppException catch (error) {
+                              trackingError = error.message;
                             }
-                            final sale = await showModalBottomSheet<SaleResult>(
-                              context: context,
-                              isScrollControlled: true,
-                              useSafeArea: true,
-                              builder:
-                                  (_) => _PaymentSheet(quote: state.quote!),
-                            );
-                            if (sale == null || !context.mounted) return;
-                            final printed =
-                                sale.isPending
-                                    ? false
-                                    : await ref
-                                        .read(
-                                          printerControllerProvider.notifier,
-                                        )
-                                        .printReceipt(sale.receiptLines);
-                            String? trackingError;
-                            if (printed) {
-                              try {
-                                await ref
-                                    .read(posRepositoryProvider)
-                                    .markPrinted(sale.orderId);
-                              } on AppException catch (error) {
-                                trackingError = error.message;
-                              }
-                            }
-                            if (!context.mounted) return;
-                            final printerMessage =
-                                ref.read(printerControllerProvider).message;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  printed
-                                      ? trackingError != null
+                          }
+                          if (!context.mounted) return;
+                          final printerMessage = ref
+                              .read(printerControllerProvider)
+                              .message;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                printed
+                                    ? trackingError != null
                                           ? 'Receipt printed, but its counter could not be updated: $trackingError'
                                           : sale.isPending
                                           ? 'Invoice ${sale.invoiceNumber} saved as pending (${formatMoney(sale.due)} due).'
                                           : 'Sale ${sale.invoiceNumber} created and receipt printed.'
-                                      : sale.isPending
-                                      ? 'Invoice ${sale.invoiceNumber} saved as pending (${formatMoney(sale.due)} due).'
-                                      : 'Sale ${sale.invoiceNumber} created. $printerMessage',
-                                ),
+                                    : sale.isPending
+                                    ? 'Invoice ${sale.invoiceNumber} saved as pending (${formatMoney(sale.due)} due).'
+                                    : 'Sale ${sale.invoiceNumber} created. $printerMessage',
                               ),
-                            );
-                            if (inSheet && context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          },
-                  icon:
-                      state.submitting
-                          ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
                             ),
-                          )
-                          : Icon(
-                            state.quote == null
-                                ? Icons.calculate_outlined
-                                : Icons.arrow_forward_rounded,
+                          );
+                          if (inSheet && context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        },
+                  icon: state.submitting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
+                        )
+                      : Icon(
+                          state.quote == null
+                              ? Icons.calculate_outlined
+                              : Icons.arrow_forward_rounded,
+                        ),
                   label: Text(
                     state.quote == null
                         ? 'Review total'
@@ -624,15 +619,87 @@ class _OrderPanel extends ConsumerWidget {
   }
 }
 
+Future<void> _showRewardDialog(
+  BuildContext context,
+  CartLine line,
+  void Function(int, String?) apply,
+) async {
+  var quantity = 1;
+  var reason = line.complimentaryReason ?? 'birthday';
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Free items'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(line.product.name),
+            DropdownButtonFormField<String>(
+              initialValue: reason,
+              decoration: const InputDecoration(labelText: 'Reason'),
+              items: const [
+                DropdownMenuItem(
+                  value: 'birthday',
+                  child: Text('Birthday treat'),
+                ),
+                DropdownMenuItem(
+                  value: 'loyalty_card',
+                  child: Text('Loyalty reward'),
+                ),
+                DropdownMenuItem(value: 'paid', child: Text('Regular price')),
+              ],
+              onChanged: (value) => setState(() => reason = value!),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: quantity > 1
+                      ? () => setState(() => quantity--)
+                      : null,
+                  icon: const Icon(Icons.remove),
+                ),
+                Text('$quantity of ${line.quantity}'),
+                IconButton(
+                  onPressed: quantity < line.quantity
+                      ? () => setState(() => quantity++)
+                      : null,
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              apply(quantity, reason == 'paid' ? null : reason);
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _CartLineTile extends StatelessWidget {
   const _CartLineTile({
     required this.line,
     required this.onDecrease,
+    this.onReward,
     required this.onIncrease,
   });
 
   final CartLine line;
   final VoidCallback onDecrease;
+  final VoidCallback? onReward;
   final VoidCallback onIncrease;
 
   @override
@@ -660,6 +727,14 @@ class _CartLineTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
+              if (line.complimentaryLabel != null)
+                Text(
+                  '${line.complimentaryLabel} — FREE',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               Text(
                 formatMoney(line.total),
                 style: TextStyle(
@@ -668,6 +743,11 @@ class _CartLineTile extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        IconButton(
+          tooltip: 'Make free / change reward',
+          onPressed: onReward,
+          icon: const Icon(Icons.card_giftcard),
         ),
         _QuantityButton(icon: Icons.remove_rounded, onTap: onDecrease),
         SizedBox(
@@ -833,80 +913,72 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                 ),
                 const SizedBox(height: 22),
                 Row(
-                  children:
-                      ['Cash', 'Card', 'Transfer'].map((value) {
-                        final selected = method == value;
-                        final icon = switch (value) {
-                          'Cash' => Icons.payments_outlined,
-                          'Card' => Icons.credit_card_rounded,
-                          _ => Icons.account_balance_outlined,
-                        };
-                        return Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              right: value == 'Transfer' ? 0 : 10,
+                  children: ['Cash', 'Card', 'Transfer'].map((value) {
+                    final selected = method == value;
+                    final icon = switch (value) {
+                      'Cash' => Icons.payments_outlined,
+                      'Card' => Icons.credit_card_rounded,
+                      _ => Icons.account_balance_outlined,
+                    };
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: value == 'Transfer' ? 0 : 10,
+                        ),
+                        child: InkWell(
+                          onTap: () => setState(() {
+                            method = value;
+                            if (value != 'Cash') {
+                              tendered.text = quote.total.toStringAsFixed(2);
+                              tendered.selection = TextSelection(
+                                baseOffset: 0,
+                                extentOffset: tendered.text.length,
+                              );
+                            }
+                          }),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: wide ? 24 : 18,
+                              horizontal: 8,
                             ),
-                            child: InkWell(
-                              onTap:
-                                  () => setState(() {
-                                    method = value;
-                                    if (value != 'Cash') {
-                                      tendered.text = quote.total
-                                          .toStringAsFixed(2);
-                                      tendered.selection = TextSelection(
-                                        baseOffset: 0,
-                                        extentOffset: tendered.text.length,
-                                      );
-                                    }
-                                  }),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.coffee.withValues(alpha: .12)
+                                  : Theme.of(context).cardTheme.color,
                               borderRadius: BorderRadius.circular(14),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: wide ? 24 : 18,
-                                  horizontal: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      selected
-                                          ? AppColors.coffee.withValues(
-                                            alpha: .12,
-                                          )
-                                          : Theme.of(context).cardTheme.color,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color:
-                                        selected
-                                            ? AppColors.coffee
-                                            : Theme.of(
-                                              context,
-                                            ).colorScheme.outlineVariant,
-                                    width: selected ? 1.5 : 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      icon,
-                                      color: selected ? AppColors.coffee : null,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      value,
-                                      maxLines: 1,
-                                      style: TextStyle(
-                                        fontWeight:
-                                            selected
-                                                ? FontWeight.w800
-                                                : FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              border: Border.all(
+                                color: selected
+                                    ? AppColors.coffee
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.outlineVariant,
+                                width: selected ? 1.5 : 1,
                               ),
                             ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  icon,
+                                  color: selected ? AppColors.coffee : null,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  value,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontWeight: selected
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 24),
                 TextField(
@@ -928,12 +1000,10 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                       child: TextField(
                         controller: tendered,
                         enabled: !state.submitting,
-                        onTap:
-                            () =>
-                                tendered.selection = TextSelection(
-                                  baseOffset: 0,
-                                  extentOffset: tendered.text.length,
-                                ),
+                        onTap: () => tendered.selection = TextSelection(
+                          baseOffset: 0,
+                          extentOffset: tendered.text.length,
+                        ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -1009,20 +1079,18 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                 ],
                 const SizedBox(height: 18),
                 FilledButton.icon(
-                  onPressed:
-                      state.submitting || checkingLoyalty || amount < 0
-                          ? null
-                          : () => saveOrder(amount),
-                  icon:
-                      state.submitting
-                          ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                          : const Icon(Icons.arrow_forward_rounded),
+                  onPressed: state.submitting || checkingLoyalty || amount < 0
+                      ? null
+                      : () => saveOrder(amount),
+                  icon: state.submitting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.arrow_forward_rounded),
                   label: Text(
                     due > 0.00001
                         ? 'Save pending · ${formatMoney(due)} due'
@@ -1052,10 +1120,9 @@ class _SummaryRow extends StatelessWidget {
           label,
           style: TextStyle(
             fontWeight: emphasized ? FontWeight.w800 : FontWeight.w500,
-            color:
-                emphasized
-                    ? null
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
+            color: emphasized
+                ? null
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),

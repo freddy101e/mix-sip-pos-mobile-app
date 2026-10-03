@@ -100,8 +100,8 @@ class OrdersScreen extends ConsumerWidget {
                             ),
                           ],
                           selected: {state.filter},
-                          onSelectionChanged:
-                              (value) => controller.load(value.first),
+                          onSelectionChanged: (value) =>
+                              controller.load(value.first),
                         ),
                       ),
                     ],
@@ -116,65 +116,61 @@ class OrdersScreen extends ConsumerWidget {
                     ),
                   ),
                 Expanded(
-                  child:
-                      state.loading
-                          ? const Center(child: CircularProgressIndicator())
-                          : RefreshIndicator(
-                            onRefresh: controller.load,
-                            child:
-                                state.orders.isEmpty
-                                    ? ListView(
-                                      children: const [
-                                        AppEmptyState(
-                                          icon: Icons.receipt_long_outlined,
-                                          title: 'No orders here',
-                                          message:
-                                              'Orders matching this status will appear here.',
-                                        ),
-                                      ],
-                                    )
-                                    : LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        final columns =
-                                            constraints.maxWidth >= 760 ? 2 : 1;
-                                        return GridView.builder(
-                                          padding: const EdgeInsets.fromLTRB(
-                                            20,
-                                            4,
-                                            20,
-                                            28,
+                  child: state.loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : RefreshIndicator(
+                          onRefresh: controller.load,
+                          child: state.orders.isEmpty
+                              ? ListView(
+                                  children: const [
+                                    AppEmptyState(
+                                      icon: Icons.receipt_long_outlined,
+                                      title: 'No orders here',
+                                      message:
+                                          'Orders matching this status will appear here.',
+                                    ),
+                                  ],
+                                )
+                              : LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final columns = constraints.maxWidth >= 760
+                                        ? 2
+                                        : 1;
+                                    return GridView.builder(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        20,
+                                        4,
+                                        20,
+                                        28,
+                                      ),
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: columns,
+                                            mainAxisExtent: 176,
+                                            crossAxisSpacing: 12,
+                                            mainAxisSpacing: 12,
                                           ),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                                crossAxisCount: columns,
-                                                mainAxisExtent: 176,
-                                                crossAxisSpacing: 12,
-                                                mainAxisSpacing: 12,
+                                      itemCount: state.orders.length,
+                                      itemBuilder: (context, index) {
+                                        final order = state.orders[index];
+                                        return _OrderCard(
+                                          order: order,
+                                          onTap: () async {
+                                            await Navigator.push<bool>(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    OrderDetailScreen(order),
                                               ),
-                                          itemCount: state.orders.length,
-                                          itemBuilder: (context, index) {
-                                            final order = state.orders[index];
-                                            return _OrderCard(
-                                              order: order,
-                                              onTap: () async {
-                                                await Navigator.push<bool>(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder:
-                                                        (_) =>
-                                                            OrderDetailScreen(
-                                                              order,
-                                                            ),
-                                                  ),
-                                                );
-                                                await controller.load();
-                                              },
                                             );
+                                            await controller.load();
                                           },
                                         );
                                       },
-                                    ),
-                          ),
+                                    );
+                                  },
+                                ),
+                        ),
                 ),
               ],
             ),
@@ -268,10 +264,9 @@ class _OrderCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side:
-            edited
-                ? const BorderSide(color: editColor, width: 1.5)
-                : BorderSide.none,
+        side: edited
+            ? const BorderSide(color: editColor, width: 1.5)
+            : BorderSide.none,
       ),
       child: InkWell(
         onTap: onTap,
@@ -470,10 +465,9 @@ class _OrderCard extends StatelessWidget {
                     child: Text(
                       due ? '${formatMoney(order.due)} due' : order.status,
                       style: TextStyle(
-                        color:
-                            complete
-                                ? const Color(0xFF21856A)
-                                : AppColors.coffeeDark,
+                        color: complete
+                            ? const Color(0xFF21856A)
+                            : AppColors.coffeeDark,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                       ),
@@ -486,8 +480,9 @@ class _OrderCard extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -593,10 +588,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             return AppEmptyState(
               icon: Icons.cloud_off_rounded,
               title: 'Could not load this order',
-              message:
-                  snapshot.error is AppException
-                      ? (snapshot.error! as AppException).message
-                      : 'Please check the connection and try again.',
+              message: snapshot.error is AppException
+                  ? (snapshot.error! as AppException).message
+                  : 'Please check the connection and try again.',
             );
           }
           final data = snapshot.data ?? const <Map<String, dynamic>>[];
@@ -622,10 +616,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           Text(
                             '${order.status} · ${order.date}',
                             style: TextStyle(
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const Divider(height: 30),
@@ -656,11 +649,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                           ),
                                         ),
                                         Text(
-                                          '${item['quantity']} × ${_itemMoney(item['unitcost'])}',
-                                          style:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.bodySmall,
+                                          '${item['quantity']} × ${_itemMoney(item['unitcost'])}${item['complimentary_label'] == null ? '' : ' · ${item['complimentary_label']} — FREE'}',
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall,
                                         ),
                                       ],
                                     ),
@@ -687,12 +679,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                               ),
                               Text(
                                 formatMoney(order.total),
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineSmall?.copyWith(
-                                  color: AppColors.coffee,
-                                  fontWeight: FontWeight.w900,
-                                ),
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      color: AppColors.coffee,
+                                      fontWeight: FontWeight.w900,
+                                    ),
                               ),
                             ],
                           ),
@@ -708,17 +699,15 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ),
                   if (order.editCount > 0) ...[
                     OutlinedButton.icon(
-                      onPressed:
-                          () => showModalBottomSheet<void>(
-                            context: context,
-                            isScrollControlled: true,
-                            useSafeArea: true,
-                            builder:
-                                (_) => _OrderEditHistorySheet(
-                                  order: order,
-                                  repository: repository,
-                                ),
-                          ),
+                      onPressed: () => showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        useSafeArea: true,
+                        builder: (_) => _OrderEditHistorySheet(
+                          order: order,
+                          repository: repository,
+                        ),
+                      ),
                       icon: const Icon(Icons.history_rounded),
                       label: Text('Edit history (${order.editCount})'),
                       style: OutlinedButton.styleFrom(
@@ -729,17 +718,15 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ],
                   if (order.total - order.due > .00001) ...[
                     OutlinedButton.icon(
-                      onPressed:
-                          () => showModalBottomSheet<void>(
-                            context: context,
-                            isScrollControlled: true,
-                            useSafeArea: true,
-                            builder:
-                                (_) => _PaymentHistorySheet(
-                                  order: order,
-                                  repository: repository,
-                                ),
-                          ),
+                      onPressed: () => showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        useSafeArea: true,
+                        builder: (_) => _PaymentHistorySheet(
+                          order: order,
+                          repository: repository,
+                        ),
+                      ),
                       icon: const Icon(Icons.payments_outlined),
                       label: const Text('Payment history'),
                       style: OutlinedButton.styleFrom(
@@ -750,13 +737,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ],
                   OutlinedButton.icon(
                     onPressed: printing ? null : () => _printReceipt(data),
-                    icon:
-                        printing
-                            ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Icon(Icons.print_rounded),
+                    icon: printing
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.print_rounded),
                     label: Text(
                       printing ? 'Printing receipt...' : 'Print receipt',
                     ),
@@ -772,12 +758,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           final changed = await showModalBottomSheet<bool>(
                             context: context,
                             isScrollControlled: true,
-                            builder:
-                                (_) => _PendingOrderEditor(
-                                  order: order,
-                                  items: data,
-                                  repository: repository,
-                                ),
+                            builder: (_) => _PendingOrderEditor(
+                              order: order,
+                              items: data,
+                              repository: repository,
+                            ),
                           );
                           if (changed == true && context.mounted) {
                             Navigator.pop(context, true);
@@ -792,11 +777,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       onPressed: () async {
                         final paid = await showDialog<bool>(
                           context: context,
-                          builder:
-                              (_) => _PayDueDialog(
-                                order: order,
-                                repository: repository,
-                              ),
+                          builder: (_) => _PayDueDialog(
+                            order: order,
+                            repository: repository,
+                          ),
                         );
                         if (paid == true && context.mounted) {
                           await _printReceipt(data);
@@ -846,8 +830,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           content: Text(
             printed
                 ? trackingError == null
-                    ? 'Receipt ${widget.order.invoice} printed successfully.'
-                    : 'Receipt printed, but its counter could not be updated: $trackingError'
+                      ? 'Receipt ${widget.order.invoice} printed successfully.'
+                      : 'Receipt printed, but its counter could not be updated: $trackingError'
                 : printerMessage,
           ),
         ),
@@ -901,10 +885,9 @@ class _PaymentHistorySheetState extends State<_PaymentHistorySheet> {
           return AppEmptyState(
             icon: Icons.cloud_off_rounded,
             title: 'Could not load payment history',
-            message:
-                snapshot.error is AppException
-                    ? (snapshot.error! as AppException).message
-                    : 'Please check the connection and try again.',
+            message: snapshot.error is AppException
+                ? (snapshot.error! as AppException).message
+                : 'Please check the connection and try again.',
           );
         }
         final records = snapshot.data ?? const <OrderPayment>[];
@@ -937,14 +920,13 @@ class _PaymentHistorySheetState extends State<_PaymentHistorySheet> {
                       ? 'Historical payment'
                       : 'Initial payment'} · ${payment.method}\n${_editTimestamp(payment.paidAt)}${payment.user == null ? '' : ' · ${payment.user}'}',
                 ),
-                trailing:
-                    payment.change > 0
-                        ? Text(
-                          '${formatMoney(payment.change)}\nchange',
-                          textAlign: TextAlign.end,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        )
-                        : null,
+                trailing: payment.change > 0
+                    ? Text(
+                        '${formatMoney(payment.change)}\nchange',
+                        textAlign: TextAlign.end,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      )
+                    : null,
               ),
             );
           },
@@ -992,10 +974,9 @@ class _OrderEditHistorySheetState extends State<_OrderEditHistorySheet> {
           return AppEmptyState(
             icon: Icons.cloud_off_rounded,
             title: 'Could not load edit history',
-            message:
-                snapshot.error is AppException
-                    ? (snapshot.error! as AppException).message
-                    : 'Please check the connection and try again.',
+            message: snapshot.error is AppException
+                ? (snapshot.error! as AppException).message
+                : 'Please check the connection and try again.',
           );
         }
         final entries = snapshot.data ?? const <OrderEditLog>[];
@@ -1107,10 +1088,9 @@ class _SnapshotCard extends StatelessWidget {
   );
 }
 
-String _quantityLabel(double quantity) =>
-    quantity == quantity.roundToDouble()
-        ? quantity.toInt().toString()
-        : quantity.toString();
+String _quantityLabel(double quantity) => quantity == quantity.roundToDouble()
+    ? quantity.toInt().toString()
+    : quantity.toString();
 
 String _editTimestamp(DateTime? value) {
   if (value == null) return 'Time unavailable';
@@ -1143,16 +1123,18 @@ class _PendingOrderEditorState extends State<_PendingOrderEditor> {
   @override
   void initState() {
     super.initState();
-    lines =
-        widget.items
-            .map(
-              (item) => {
-                'product_id': item['product_id'],
-                'name': item['product_name'],
-                'quantity': (item['quantity'] as num).toInt(),
-              },
-            )
-            .toList();
+    lines = widget.items
+        .map(
+          (item) => {
+            'product_id': item['product_id'],
+            'name': item['complimentary_label'] == null
+                ? item['product_name']
+                : '${item['product_name']} · ${item['complimentary_label']} — FREE',
+            'quantity': (item['quantity'] as num).toInt(),
+            'complimentary_reason': item['complimentary_reason'],
+          },
+        )
+        .toList();
     _search('');
   }
 
@@ -1178,6 +1160,7 @@ class _PendingOrderEditorState extends State<_PendingOrderEditor> {
               (line) => {
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
+                'complimentary_reason': line['complimentary_reason'],
               },
             )
             .toList(),
@@ -1222,25 +1205,22 @@ class _PendingOrderEditorState extends State<_PendingOrderEditor> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          onPressed:
-                              () => setState(
-                                () =>
-                                    line['quantity'] =
-                                        quantity > 1 ? quantity - 1 : 1,
-                              ),
+                          onPressed: () => setState(
+                            () => line['quantity'] = quantity > 1
+                                ? quantity - 1
+                                : 1,
+                          ),
                           icon: const Icon(Icons.remove_circle_outline),
                         ),
                         Text('$quantity'),
                         IconButton(
-                          onPressed:
-                              () => setState(
-                                () => line['quantity'] = quantity + 1,
-                              ),
+                          onPressed: () =>
+                              setState(() => line['quantity'] = quantity + 1),
                           icon: const Icon(Icons.add_circle_outline),
                         ),
                         IconButton(
-                          onPressed:
-                              () => setState(() => lines.removeAt(entry.key)),
+                          onPressed: () =>
+                              setState(() => lines.removeAt(entry.key)),
                           icon: const Icon(Icons.delete_outline),
                         ),
                       ],
@@ -1258,24 +1238,22 @@ class _PendingOrderEditorState extends State<_PendingOrderEditor> {
                 const SizedBox(height: 8),
                 ...products
                     .where(
-                      (product) =>
-                          !lines.any(
-                            (line) => line['product_id'] == product['id'],
-                          ),
+                      (product) => !lines.any(
+                        (line) => line['product_id'] == product['id'],
+                      ),
                     )
                     .map(
                       (product) => ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(product['product_name'].toString()),
                         trailing: const Icon(Icons.add),
-                        onTap:
-                            () => setState(
-                              () => lines.add({
-                                'product_id': product['id'],
-                                'name': product['product_name'],
-                                'quantity': 1,
-                              }),
-                            ),
+                        onTap: () => setState(
+                          () => lines.add({
+                            'product_id': product['id'],
+                            'name': product['product_name'],
+                            'quantity': 1,
+                          }),
+                        ),
                       ),
                     ),
               ],
@@ -1362,8 +1340,9 @@ class _PayDueDialogState extends State<_PayDueDialog> {
                   ),
                   IconButton(
                     tooltip: 'Close',
-                    onPressed:
-                        submitting ? null : () => Navigator.pop(context, false),
+                    onPressed: submitting
+                        ? null
+                        : () => Navigator.pop(context, false),
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],
@@ -1410,10 +1389,9 @@ class _PayDueDialogState extends State<_PayDueDialog> {
                   ),
                 ],
                 selected: {method},
-                onSelectionChanged:
-                    submitting
-                        ? null
-                        : (value) => setState(() => method = value.first),
+                onSelectionChanged: submitting
+                    ? null
+                    : (value) => setState(() => method = value.first),
               ),
               const SizedBox(height: 22),
               TextField(
@@ -1431,10 +1409,9 @@ class _PayDueDialogState extends State<_PayDueDialog> {
                   prefixText: '\$ ',
                   suffixIcon: IconButton(
                     tooltip: 'Clear tendered amount',
-                    onPressed:
-                        submitting
-                            ? null
-                            : () => setState(() => amount.text = '0.00'),
+                    onPressed: submitting
+                        ? null
+                        : () => setState(() => amount.text = '0.00'),
                     icon: const Icon(Icons.backspace_outlined),
                   ),
                 ),
@@ -1465,16 +1442,15 @@ class _PayDueDialogState extends State<_PayDueDialog> {
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
                 ),
-                icon:
-                    submitting
-                        ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                        : const Icon(Icons.payments_rounded),
+                icon: submitting
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.payments_rounded),
                 label: Text(
                   submitting
                       ? 'Processing payment...'

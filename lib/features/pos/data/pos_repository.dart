@@ -1,3 +1,4 @@
+import '../../../core/errors/app_exception.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_parser.dart';
 import '../domain/pos_models.dart';
@@ -29,6 +30,7 @@ class PosRepository implements PosDataSource {
       );
       return (response.data!['data'] as Map<String, dynamic>)['active'] == true;
     } catch (e) {
+      if (e is AppException) rethrow;
       throw ApiErrorParser.parse(e);
     }
   }
@@ -37,6 +39,7 @@ class PosRepository implements PosDataSource {
     try {
       await _api.dio.post<void>('/orders/$orderId/printed');
     } catch (e) {
+      if (e is AppException) rethrow;
       throw ApiErrorParser.parse(e);
     }
   }
@@ -52,6 +55,7 @@ class PosRepository implements PosDataSource {
           .map((e) => Product.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
+      if (e is AppException) rethrow;
       throw ApiErrorParser.parse(e);
     }
   }
@@ -67,6 +71,7 @@ class PosRepository implements PosDataSource {
           .map((e) => Customer.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
+      if (e is AppException) rethrow;
       throw ApiErrorParser.parse(e);
     }
   }
@@ -74,10 +79,15 @@ class PosRepository implements PosDataSource {
   Map<String, dynamic> payload(Customer customer, List<CartLine> lines) => {
     'customer_id': customer.id,
     'discount_percent': customer.discountPercent,
-    'lines':
-        lines
-            .map((e) => {'product_id': e.product.id, 'quantity': e.quantity})
-            .toList(),
+    'lines': lines
+        .map(
+          (e) => {
+            'product_id': e.product.id,
+            'quantity': e.quantity,
+            'complimentary_reason': e.complimentaryReason,
+          },
+        )
+        .toList(),
   };
   @override
   Future<PosQuote> quote(Customer customer, List<CartLine> lines) async {
@@ -86,8 +96,11 @@ class PosRepository implements PosDataSource {
         '/pos/quote',
         data: payload(customer, lines),
       );
-      return PosQuote.fromJson(r.data!['data'] as Map<String, dynamic>);
+      final data = r.data!['data'] as Map<String, dynamic>;
+      PosQuote.validateFreeLines(data, lines);
+      return PosQuote.fromJson(data);
     } catch (e) {
+      if (e is AppException) rethrow;
       throw ApiErrorParser.parse(e);
     }
   }
@@ -125,6 +138,7 @@ class PosRepository implements PosDataSource {
         cart: lines,
       );
     } catch (e) {
+      if (e is AppException) rethrow;
       throw ApiErrorParser.parse(e);
     }
   }
